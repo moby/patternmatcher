@@ -200,7 +200,7 @@ func TestMatches(t *testing.T) {
 
 	t.Run("MatchesOrParentMatches", func(t *testing.T) {
 		for _, test := range tests {
-			pm, err := NewPatternMatcher([]string{test.pattern})
+			pm, err := New([]string{test.pattern})
 			if err != nil {
 				t.Fatalf("%v (pattern=%q, text=%q)", err, test.pattern, test.text)
 			}
@@ -211,7 +211,7 @@ func TestMatches(t *testing.T) {
 		}
 
 		for _, test := range multiPatternTests {
-			pm, err := NewPatternMatcher(test.patterns)
+			pm, err := New(test.patterns)
 			if err != nil {
 				t.Fatalf("%v (patterns=%q, text=%q)", err, test.patterns, test.text)
 			}
@@ -224,7 +224,7 @@ func TestMatches(t *testing.T) {
 
 	t.Run("MatchesUsingParentResult", func(t *testing.T) {
 		for _, test := range tests {
-			pm, err := NewPatternMatcher([]string{test.pattern})
+			pm, err := New([]string{test.pattern})
 			if err != nil {
 				t.Fatalf("%v (pattern=%q, text=%q)", err, test.pattern, test.text)
 			}
@@ -266,7 +266,7 @@ func TestMatches(t *testing.T) {
 
 		for _, test := range tests {
 			desc := fmt.Sprintf("(pattern=%q text=%q)", test.pattern, test.text)
-			pm, err := NewPatternMatcher([]string{test.pattern})
+			pm, err := New([]string{test.pattern})
 			if err != nil {
 				t.Fatal(err, desc)
 			}
@@ -276,7 +276,7 @@ func TestMatches(t *testing.T) {
 
 		for _, test := range multiPatternTests {
 			desc := fmt.Sprintf("pattern=%q text=%q", test.patterns, test.text)
-			pm, err := NewPatternMatcher(test.patterns)
+			pm, err := New(test.patterns)
 			if err != nil {
 				t.Fatal(err, desc)
 			}
@@ -295,7 +295,7 @@ func TestMatches(t *testing.T) {
 
 		for _, test := range tests {
 			desc := fmt.Sprintf("(pattern=%q text=%q)", test.pattern, test.text)
-			pm, err := NewPatternMatcher([]string{test.pattern})
+			pm, err := New([]string{test.pattern})
 			if err != nil {
 				t.Fatal(err, desc)
 			}
@@ -305,7 +305,7 @@ func TestMatches(t *testing.T) {
 
 		for _, test := range multiPatternTests {
 			desc := fmt.Sprintf("(pattern=%q text=%q)", test.patterns, test.text)
-			pm, err := NewPatternMatcher(test.patterns)
+			pm, err := New(test.patterns)
 			if err != nil {
 				t.Fatal(err, desc)
 			}
@@ -317,7 +317,7 @@ func TestMatches(t *testing.T) {
 
 func TestCleanPatterns(t *testing.T) {
 	patterns := []string{"docs", "config"}
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		t.Fatalf("invalid pattern %v", patterns)
 	}
@@ -329,7 +329,7 @@ func TestCleanPatterns(t *testing.T) {
 
 func TestCleanPatternsStripEmptyPatterns(t *testing.T) {
 	patterns := []string{"docs", "config", ""}
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		t.Fatalf("invalid pattern %v", patterns)
 	}
@@ -341,7 +341,7 @@ func TestCleanPatternsStripEmptyPatterns(t *testing.T) {
 
 func TestCleanPatternsExceptionFlag(t *testing.T) {
 	patterns := []string{"docs", "!docs/README.md"}
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		t.Fatalf("invalid pattern %v", patterns)
 	}
@@ -352,7 +352,7 @@ func TestCleanPatternsExceptionFlag(t *testing.T) {
 
 func TestCleanPatternsLeadingSpaceTrimmed(t *testing.T) {
 	patterns := []string{"docs", "  !docs/README.md"}
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		t.Fatalf("invalid pattern %v", patterns)
 	}
@@ -363,7 +363,7 @@ func TestCleanPatternsLeadingSpaceTrimmed(t *testing.T) {
 
 func TestCleanPatternsTrailingSpaceTrimmed(t *testing.T) {
 	patterns := []string{"docs", "!docs/README.md  "}
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		t.Fatalf("invalid pattern %v", patterns)
 	}
@@ -374,7 +374,7 @@ func TestCleanPatternsTrailingSpaceTrimmed(t *testing.T) {
 
 func TestCleanPatternsErrorSingleException(t *testing.T) {
 	patterns := []string{"!"}
-	_, err := NewPatternMatcher(patterns)
+	_, err := New(patterns)
 	if err == nil {
 		t.Errorf("expected error on single exclamation point, got %v", err)
 	}

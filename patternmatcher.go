@@ -37,9 +37,9 @@ type PatternMatcher struct {
 	exclusions bool
 }
 
-// NewPatternMatcher creates a new matcher object for specific patterns that can
+// New creates a new matcher object for specific patterns that can
 // be used later to match against patterns against paths
-func NewPatternMatcher(patterns []string) (*PatternMatcher, error) {
+func New(patterns []string) (*PatternMatcher, error) {
 	pm := &PatternMatcher{
 		patterns: make([]*Pattern, 0, len(patterns)),
 	}
@@ -442,7 +442,7 @@ func (p *Pattern) compile(sl string) error {
 // This implementation is buggy (it only checks a single parent dir against the
 // pattern) and will be removed soon. Use MatchesOrParentMatches instead.
 func Matches(file string, patterns []string) (bool, error) {
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		return false, err
 	}
@@ -459,7 +459,7 @@ func Matches(file string, patterns []string) (bool, error) {
 // MatchesOrParentMatches returns true if file matches any of the patterns
 // and isn't excluded by any of the subsequent patterns.
 func MatchesOrParentMatches(file string, patterns []string) (bool, error) {
-	pm, err := NewPatternMatcher(patterns)
+	pm, err := New(patterns)
 	if err != nil {
 		return false, err
 	}
