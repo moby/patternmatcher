@@ -1,4 +1,4 @@
-package fileutils
+package patternmatcher
 
 import (
 	"errors"
