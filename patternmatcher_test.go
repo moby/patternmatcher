@@ -545,3 +545,33 @@ func testCompile(sl string) func(*testing.T) {
 		}
 	}
 }
+
+// regression test for https://github.com/moby/moby/issues/52203
+func TestMatchesOrParentMatchesMalformedPatternDoesNotPanicOnRepeatedCall(t *testing.T) {
+	pm, err := New([]string{"[Local-Only]/"})
+	if err != nil {
+		t.Fatalf("expected pattern to pass initial validation, got %v", err)
+	}
+
+	_, err = pm.MatchesOrParentMatches("x")
+	if err == nil {
+		t.Fatal("expected first match to fail with a bad pattern error")
+	}
+	if err != filepath.ErrBadPattern {
+		t.Fatalf("expected %v, got %v", filepath.ErrBadPattern, err)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("second match panicked: %v", r)
+		}
+	}()
+
+	_, err = pm.MatchesOrParentMatches("x")
+	if err == nil {
+		t.Fatal("expected second match to fail with a bad pattern error")
+	}
+	if err != filepath.ErrBadPattern {
+		t.Fatalf("expected %v on second call, got %v", filepath.ErrBadPattern, err)
+	}
+}
