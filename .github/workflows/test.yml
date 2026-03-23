@@ -1,21 +1,34 @@
 name: test
-on: [push, pull_request]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on: [push, pull_request]
+
 jobs:
   test:
-    strategy:
-      matrix:
-        go-version: [1.18.x, 1.20.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.platform }} (${{ matrix.go-version || 'oldest' }})
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - "" # do not specify go-version to fall back on go-version-file (use go.mod); see https://github.com/actions/setup-go/issues/450#issuecomment-3620402646
+          - "oldstable"
+          - "stable"
+        platform: [ubuntu-latest,windows-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/setup-go@v4
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
-      - uses: actions/checkout@v3
+          go-version-file: "go.mod" # used when go-version is not specified.
       - name: Test
         run: go test -v ./...
