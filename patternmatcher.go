@@ -119,6 +119,36 @@ func (pm *PatternMatcher) Matches(file string) (bool, error) {
 	return matched, nil
 }
 
+// MatchesExact returns true if "file" exactly matches any of the patterns.
+// Unlike MatchesOrParentMatches, no parent matching is performed.
+//
+// The "file" argument should be a slash-delimited path.
+//
+// MatchesExact is not safe to call concurrently.
+func (pm *PatternMatcher) MatchesExact(file string) (bool, error) {
+	matched := false
+	file = filepath.FromSlash(file)
+
+	for _, pattern := range pm.patterns {
+		// Skip evaluation if this is an inclusion and the filename
+		// already matched the pattern, or it's an exclusion and it has
+		// not matched the pattern yet.
+		if pattern.exclusion != matched {
+			continue
+		}
+
+		match, err := pattern.match(file)
+		if err != nil {
+			return false, err
+		}
+
+		if match {
+			matched = !pattern.exclusion
+		}
+	}
+	return matched, nil
+}
+
 // MatchesOrParentMatches returns true if "file" matches any of the patterns
 // and isn't excluded by any of the subsequent patterns.
 //

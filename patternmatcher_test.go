@@ -106,97 +106,128 @@ func TestMatchesWithMalformedPatterns(t *testing.T) {
 type matchesTestCase struct {
 	pattern string
 	text    string
-	pass    bool
+	pass    testMatchType
 }
 
 type multiPatternTestCase struct {
 	patterns []string
 	text     string
-	pass     bool
+	pass     testMatchType
 }
+
+type testMatchType int
+
+const (
+	fail    testMatchType = iota
+	exact   testMatchType = iota
+	inexact testMatchType = iota
+)
 
 func TestMatches(t *testing.T) {
 	tests := []matchesTestCase{
-		{"**", "file", true},
-		{"**", "file/", true},
-		{"**/", "file", true}, // weird one
-		{"**/", "file/", true},
-		{"**", "/", true},
-		{"**/", "/", true},
-		{"**", "dir/file", true},
-		{"**/", "dir/file", true},
-		{"**", "dir/file/", true},
-		{"**/", "dir/file/", true},
-		{"**/**", "dir/file", true},
-		{"**/**", "dir/file/", true},
-		{"dir/**", "dir/file", true},
-		{"dir/**", "dir/file/", true},
-		{"dir/**", "dir/dir2/file", true},
-		{"dir/**", "dir/dir2/file/", true},
-		{"**/dir", "dir", true},
-		{"**/dir", "dir/file", true},
-		{"**/dir2/*", "dir/dir2/file", true},
-		{"**/dir2/*", "dir/dir2/file/", true},
-		{"**/dir2/**", "dir/dir2/dir3/file", true},
-		{"**/dir2/**", "dir/dir2/dir3/file/", true},
-		{"**file", "file", true},
-		{"**file", "dir/file", true},
-		{"**/file", "dir/file", true},
-		{"**file", "dir/dir/file", true},
-		{"**/file", "dir/dir/file", true},
-		{"**/file*", "dir/dir/file", true},
-		{"**/file*", "dir/dir/file.txt", true},
-		{"**/file*txt", "dir/dir/file.txt", true},
-		{"**/file*.txt", "dir/dir/file.txt", true},
-		{"**/file*.txt*", "dir/dir/file.txt", true},
-		{"**/**/*.txt", "dir/dir/file.txt", true},
-		{"**/**/*.txt2", "dir/dir/file.txt", false},
-		{"**/*.txt", "file.txt", true},
-		{"**/**/*.txt", "file.txt", true},
-		{"a**/*.txt", "a/file.txt", true},
-		{"a**/*.txt", "a/dir/file.txt", true},
-		{"a**/*.txt", "a/dir/dir/file.txt", true},
-		{"a/*.txt", "a/dir/file.txt", false},
-		{"a/*.txt", "a/file.txt", true},
-		{"a/*.txt**", "a/file.txt", true},
-		{"a[b-d]e", "ae", false},
-		{"a[b-d]e", "ace", true},
-		{"a[b-d]e", "aae", false},
-		{"a[^b-d]e", "aze", true},
-		{".*", ".foo", true},
-		{".*", "foo", false},
-		{"abc.def", "abcdef", false},
-		{"abc.def", "abc.def", true},
-		{"abc.def", "abcZdef", false},
-		{"abc?def", "abcZdef", true},
-		{"abc?def", "abcdef", false},
-		{"a\\\\", "a\\", true},
-		{"**/foo/bar", "foo/bar", true},
-		{"**/foo/bar", "dir/foo/bar", true},
-		{"**/foo/bar", "dir/dir2/foo/bar", true},
-		{"abc/**", "abc", false},
-		{"abc/**", "abc/def", true},
-		{"abc/**", "abc/def/ghi", true},
-		{"**/.foo", ".foo", true},
-		{"**/.foo", "bar.foo", false},
-		{"a(b)c/def", "a(b)c/def", true},
-		{"a(b)c/def", "a(b)c/xyz", false},
-		{"a.|)$(}+{bc", "a.|)$(}+{bc", true},
-		{"dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", true},
-		{"dist/*.whl", "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", true},
+		{"**", "file", exact},
+		{"**", "file/", exact},
+		{"**/", "file", exact}, // weird one
+		{"**/", "file/", exact},
+		{"**", "/", exact},
+		{"**/", "/", exact},
+		{"**", "dir/file", exact},
+		{"**/", "dir/file", exact},
+		{"**", "dir/file/", exact},
+		{"**/", "dir/file/", exact},
+		{"**/**", "dir/file", exact},
+		{"**/**", "dir/file/", exact},
+		{"dir/**", "dir/file", exact},
+		{"dir/**", "dir/file/", exact},
+		{"dir/**", "dir/dir2/file", exact},
+		{"dir/**", "dir/dir2/file/", exact},
+		{"**/dir", "dir", exact},
+		{"**/dir", "dir/file", inexact},
+		{"**/dir2/*", "dir/dir2/file", exact},
+		{"**/dir2/*", "dir/dir2/file/", inexact},
+		{"**/dir2/**", "dir/dir2/dir3/file", exact},
+		{"**/dir2/**", "dir/dir2/dir3/file/", exact},
+		{"**file", "file", exact},
+		{"**file", "dir/file", exact},
+		{"**/file", "dir/file", exact},
+		{"**file", "dir/dir/file", exact},
+		{"**/file", "dir/dir/file", exact},
+		{"**/file*", "dir/dir/file", exact},
+		{"**/file*", "dir/dir/file.txt", exact},
+		{"**/file*txt", "dir/dir/file.txt", exact},
+		{"**/file*.txt", "dir/dir/file.txt", exact},
+		{"**/file*.txt*", "dir/dir/file.txt", exact},
+		{"**/**/*.txt", "dir/dir/file.txt", exact},
+		{"**/**/*.txt2", "dir/dir/file.txt", fail},
+		{"**/*.txt", "file.txt", exact},
+		{"**/**/*.txt", "file.txt", exact},
+		{"a**/*.txt", "a/file.txt", exact},
+		{"a**/*.txt", "a/dir/file.txt", exact},
+		{"a**/*.txt", "a/dir/dir/file.txt", exact},
+		{"a/*.txt", "a/dir/file.txt", fail},
+		{"a/*.txt", "a/file.txt", exact},
+		{"a/*.txt**", "a/file.txt", exact},
+		{"a[b-d]e", "ae", fail},
+		{"a[b-d]e", "ace", exact},
+		{"a[b-d]e", "aae", fail},
+		{"a[^b-d]e", "aze", exact},
+		{".*", ".foo", exact},
+		{".*", "foo", fail},
+		{"abc.def", "abcdef", fail},
+		{"abc.def", "abc.def", exact},
+		{"abc.def", "abcZdef", fail},
+		{"abc?def", "abcZdef", exact},
+		{"abc?def", "abcdef", fail},
+		{"**/foo/bar", "foo/bar", exact},
+		{"**/foo/bar", "dir/foo/bar", exact},
+		{"**/foo/bar", "dir/dir2/foo/bar", exact},
+		{"abc/**", "abc", fail},
+		{"abc/**", "abc/def", exact},
+		{"abc/**", "abc/def/ghi", exact},
+		{"**/.foo", ".foo", exact},
+		{"**/.foo", "bar.foo", fail},
+		{"a(b)c/def", "a(b)c/def", exact},
+		{"a(b)c/def", "a(b)c/xyz", fail},
+		{"a.|)$(}+{bc", "a.|)$(}+{bc", exact},
+		{"dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", exact},
+		{"dist/*.whl", "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", exact},
 	}
 	multiPatternTests := []multiPatternTestCase{
-		{[]string{"**", "!util/docker/web"}, "util/docker/web/foo", false},
-		{[]string{"**", "!util/docker/web", "util/docker/web/foo"}, "util/docker/web/foo", true},
-		{[]string{"**", "!dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl"}, "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", false},
-		{[]string{"**", "!dist/*.whl"}, "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", false},
+		{[]string{"**", "!util/docker/web"}, "util/docker/web/foo", fail},
+		{[]string{"**", "!util/docker/web", "util/docker/web/foo"}, "util/docker/web/foo", exact},
+		{[]string{"**", "!dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl"}, "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", fail},
+		{[]string{"**", "!dist/*.whl"}, "dist/proxy.py-2.4.0rc3.dev36+g08acad9-py3-none-any.whl", fail},
 	}
 
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS == "windows" {
 		tests = append(tests, []matchesTestCase{
-			{"a\\*b", "a*b", true},
+			{"a\\\\", "a\\", inexact},
+		}...)
+	} else {
+		tests = append(tests, []matchesTestCase{
+			{"a\\\\", "a\\", exact},
+			{"a\\*b", "a*b", exact},
 		}...)
 	}
+
+	t.Run("MatchesExact", func(t *testing.T) {
+		check := func(pm *PatternMatcher, text string, pass bool, desc string) {
+			res, _ := pm.MatchesExact(text)
+			if pass != res {
+				t.Errorf("expected: %v, got: %v %s", pass, res, desc)
+			}
+		}
+
+		for _, test := range tests {
+			desc := fmt.Sprintf("(pattern=%q text=%q)", test.pattern, test.text)
+			pm, err := New([]string{test.pattern})
+			if err != nil {
+				t.Fatal(err, desc)
+			}
+
+			check(pm, test.text, test.pass == exact, desc)
+		}
+	})
 
 	t.Run("MatchesOrParentMatches", func(t *testing.T) {
 		for _, test := range tests {
@@ -205,7 +236,7 @@ func TestMatches(t *testing.T) {
 				t.Fatalf("%v (pattern=%q, text=%q)", err, test.pattern, test.text)
 			}
 			res, _ := pm.MatchesOrParentMatches(test.text)
-			if test.pass != res {
+			if (test.pass != fail) != res {
 				t.Fatalf("%v (pattern=%q, text=%q)", err, test.pattern, test.text)
 			}
 		}
@@ -216,7 +247,7 @@ func TestMatches(t *testing.T) {
 				t.Fatalf("%v (patterns=%q, text=%q)", err, test.patterns, test.text)
 			}
 			res, _ := pm.MatchesOrParentMatches(test.text)
-			if test.pass != res {
+			if (test.pass != fail) != res {
 				t.Errorf("expected: %v, got: %v (patterns=%q, text=%q)", test.pass, res, test.patterns, test.text)
 			}
 		}
@@ -240,7 +271,7 @@ func TestMatches(t *testing.T) {
 			}
 
 			res, _ := pm.MatchesUsingParentResult(test.text, parentMatched)
-			if test.pass != res {
+			if (test.pass != fail) != res {
 				t.Errorf("expected: %v, got: %v (pattern=%q, text=%q)", test.pass, res, test.pattern, test.text)
 			}
 		}
@@ -271,7 +302,7 @@ func TestMatches(t *testing.T) {
 				t.Fatal(err, desc)
 			}
 
-			check(pm, test.text, test.pass, desc)
+			check(pm, test.text, test.pass != fail, desc)
 		}
 
 		for _, test := range multiPatternTests {
@@ -281,7 +312,7 @@ func TestMatches(t *testing.T) {
 				t.Fatal(err, desc)
 			}
 
-			check(pm, test.text, test.pass, desc)
+			check(pm, test.text, test.pass != fail, desc)
 		}
 	})
 
@@ -300,7 +331,7 @@ func TestMatches(t *testing.T) {
 				t.Fatal(err, desc)
 			}
 
-			check(pm, test.text, test.pass, desc)
+			check(pm, test.text, test.pass != fail, desc)
 		}
 
 		for _, test := range multiPatternTests {
@@ -310,7 +341,7 @@ func TestMatches(t *testing.T) {
 				t.Fatal(err, desc)
 			}
 
-			check(pm, test.text, test.pass, desc)
+			check(pm, test.text, test.pass != fail, desc)
 		}
 	})
 }
