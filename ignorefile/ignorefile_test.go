@@ -1,14 +1,31 @@
 package ignorefile
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
+
+type emitErrorOnRead struct{}
+
+var errRead = errors.New("read error")
+
+func (r emitErrorOnRead) Read(_ []byte) (int, error) {
+	return 0, errRead
+}
 
 func TestReadAll(t *testing.T) {
 	actual, err := ReadAll(nil)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
+	}
+	if entries := len(actual); entries != 0 {
+		t.Fatalf("Expected to have zero entries, got %d", entries)
+	}
+
+	actual, err = ReadAll(emitErrorOnRead{})
+	if !errors.Is(err, errRead) {
+		t.Fatalf("Expected %v, got %v", errRead, err)
 	}
 	if entries := len(actual); entries != 0 {
 		t.Fatalf("Expected to have zero entries, got %d", entries)
