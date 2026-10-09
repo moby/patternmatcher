@@ -323,10 +323,21 @@ func (p *Pattern) match(path string) (bool, error) {
 		// strip trailing **
 		return strings.HasPrefix(path, p.cleanedPattern[:len(p.cleanedPattern)-2]), nil
 	case suffixMatch:
-		// strip leading **
+		// Strip the leading "**". The regexp path matches "(?:.*/)?" plus
+		// the remainder, so a remainder without a separator has to land on
+		// a path boundary. A plain HasSuffix made "**.md" match "name.md"
+		// while "**.m[dD]" did not.
 		suffix := p.cleanedPattern[2:]
-		if strings.HasSuffix(path, suffix) {
+		if suffix == "" {
 			return true, nil
+		}
+		if strings.HasSuffix(path, suffix) {
+			atBoundary := suffix[0] == os.PathSeparator ||
+				len(path) == len(suffix) ||
+				path[len(path)-len(suffix)-1] == os.PathSeparator
+			if atBoundary {
+				return true, nil
+			}
 		}
 		// **/foo matches "foo"
 		return suffix[0] == os.PathSeparator && path == suffix[1:], nil
